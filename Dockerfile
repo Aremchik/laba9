@@ -1,17 +1,9 @@
-FROM python:3.11-slim
-
+FROM python:3.11-slim as builder
 WORKDIR /app
+COPY app.py .
 
-# Копируем requirements.txt и устанавливаем зависимости
-COPY requirements.txt .
-
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Копируем весь код в контейнер
-COPY . .
-
-# Открываем порт для доступа
-EXPOSE 8000
-
-# Запускаем приложение через python -m uvicorn
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Stage 2: Minimal runtime
+FROM python:3.11-alpine
+WORKDIR /app
+COPY --from=builder /app/app.py .
+CMD ["python", "app.py"]
