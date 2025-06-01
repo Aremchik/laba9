@@ -1,7 +1,9 @@
-FROM python:3.11-slim
-
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
+COPY . .
+RUN dotnet publish -c Release -o out
 
-COPY app.py .
-
-CMD ["python", "app.py"]
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+WORKDIR /app
+COPY --from=build /app/out .
+ENTRYPOINT ["dotnet", "HelloNet.dll"]
