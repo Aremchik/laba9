@@ -1,14 +1,14 @@
-# Этап сборки
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
-WORKDIR /src
-COPY HelloNet/*.csproj ./HelloNet/
-WORKDIR /src/HelloNet
-RUN dotnet restore
-COPY HelloNet/. .
-RUN dotnet publish -c Release -o /app/out
-
-# Этап выполнения
-FROM mcr.microsoft.com/dotnet/runtime:9.0-preview
+# Stage 1: Build
+FROM python:3.11-slim AS builder
 WORKDIR /app
-COPY --from=build /app/out .
-ENTRYPOINT ["dotnet", "HelloNet.dll"]
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
+
+# Stage 2: Runtime
+FROM python:3.11-alpine
+WORKDIR /app
+COPY --from=builder /root/.local /root/.local
+COPY main.py .
+ENV PATH=/root/.local/bin:$PATH
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
